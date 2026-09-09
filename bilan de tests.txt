@@ -1,0 +1,120 @@
+README – Bilan de tests et recommandations
+Projet Robot Pick and Place
+
+Ce document présente le bilan des tests réalisés ainsi que les points
+importants à vérifier, corriger ou améliorer par les futurs groupes
+travaillant sur le projet. Il concerne l’ensemble du système
+(mécanique, électronique, automatisme et logiciel), et pas uniquement
+le projet UniLogic.
+
+------------------------------------------------------------
+1. Fonctionnement général du système
+------------------------------------------------------------
+
+Pour assurer un fonctionnement correct du système, il est nécessaire de :
+- déterminer précisément les positions absolues pour la prise des pièces ;
+- déterminer les positions absolues pour le dépôt des pièces ;
+- enregistrer ces positions afin de garantir la répétabilité du cycle.
+
+Ces positions doivent être validées expérimentalement et adaptées en
+fonction des contraintes mécaniques réelles.
+
+------------------------------------------------------------
+2. Vérin de prise de pièce
+------------------------------------------------------------
+
+Le vérin utilisé pour la prise des pièces ne présente pas une adhérence
+suffisante. Les pièces ont tendance à glisser lors de la manipulation.
+
+Actions recommandées :
+- augmenter l’adhérence du système de préhension ;
+- ou augmenter la force du vérin (pression ou choix du vérin).
+
+------------------------------------------------------------
+3. Gestion des fins de course et référencement
+------------------------------------------------------------
+
+Lors du référencement (commande "Go to Reference"), un problème peut
+survenir lorsque :
+- la fin de course de l’axe X est déclenchée avant celle de l’axe Y.
+
+Dans ce cas :
+- le système s’arrête ;
+- il est nécessaire de relancer un nouveau "Go to Reference".
+
+Cependant, lors du second référencement, l’axe X peut dépasser sa fin
+de course et atteindre l’arrêt d’urgence.
+
+Procédure actuelle pour corriger ce problème :
+- déplacer manuellement les axes à la main ;
+- relancer ensuite la commande "Go to Reference".
+
+------------------------------------------------------------
+4. Améliorations possibles pour le futur
+------------------------------------------------------------
+
+Pour résoudre définitivement le problème de référencement, deux solutions
+sont envisageables :
+
+- modifier le code MSP430 afin de corriger la logique de gestion des fins
+  de course ;
+- ou migrer les fonctions du MSP430 vers l’automate PLC, puis adapter
+  le programme Ladder en conséquence.
+
+------------------------------------------------------------
+5. Problème de synchronisation des moteurs de l’axe X
+------------------------------------------------------------
+
+Un problème a été observé sur les moteurs de l’axe X :
+- un moteur est plus rapide (ou l’autre plus lent) que l’autre ;
+- cela crée un décalage mécanique entre les deux axes.
+
+Ce problème peut provenir :
+- du code MSP430 ;
+- d’un défaut ou d’une différence entre les moteurs ;
+- d’un blocage mécanique ou d’une course non symétrique.
+
+Des tests supplémentaires sont nécessaires pour identifier la cause exacte.
+
+------------------------------------------------------------
+6. Détection des fins de course pièces et boîtes
+------------------------------------------------------------
+
+Pour la détection des fins de course des pièces et des boîtes, il est
+nécessaire de maintenir les vérins en position sortie.
+
+Si les vérins rentrent légèrement :
+- les blocs peuvent reculer ;
+- cela peut entraîner des erreurs de positionnement et des décalages.
+
+Solutions possibles :
+- modifier les Grafcet existants ;
+- ou anticiper ce comportement dans les valeurs absolues et relatives
+  des positions X et Y.
+
+------------------------------------------------------------
+7. Implantation mécanique à finaliser
+------------------------------------------------------------
+
+Les éléments suivants doivent encore être définis ou améliorés :
+- l’emplacement de la plaque de support de l’ensemble boîte ;
+- l’emplacement de la poubelle ;
+- la hauteur de la boîte, actuellement trop élevée et gênant le dépôt
+  des pièces.
+
+------------------------------------------------------------
+8. Câblage et alimentation
+------------------------------------------------------------
+
+Plusieurs points restent à traiter concernant le câblage :
+- définir et réaliser les chemins de câbles ;
+- brancher la fin de course de la poubelle ;
+- corriger la broche d’alimentation dont le câble vibre.
+
+Il est également indispensable de :
+- vérifier l’ensemble des câbles ;
+- s’assurer qu’ils sont correctement branchés, fixés et fonctionnels.
+
+------------------------------------------------------------
+Fin du bilan de tests
+------------------------------------------------------------
