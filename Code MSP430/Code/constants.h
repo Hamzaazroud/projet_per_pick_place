@@ -80,4 +80,11 @@
 #define FCX_PORT        GPIO_PORT_P1
 #define FCX_PIN         GPIO_PIN5
 
+#define PIECE_POSITION_X     147 
+#define PIECE_POSITION_Y    20
+#define PIECE_RAYON      50 
+#define BOX_POSITION_X  35 
+#define BOX_POSITION_Y  251 
+#define DELTA      28 
+
 #endif /* CONSTANTS_H_ */

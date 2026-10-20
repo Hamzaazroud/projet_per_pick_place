@@ -25,16 +25,19 @@ typedef struct {
     int y;     // Position Y (mm)
     int v;     // Vitesse (mm/s)
     char mode; // Mode de mouvement
+    
 } Robot;
 
 extern Robot robot;
-
+extern int pos_x1 ,pos_x2 , pos_x3 , pos_y1 ,pos_y2 ; 
 
 // PROTOTYPES
+void auto_motor_position() ;
 void set_position_command(const char *command, Robot *robot);
 void set_speed_command(const char *command, Robot *robot);
 void home_position_command(const char *command, Robot *robot);
 void get_command(const char *command);
 void auto_mode_command_test(const char *command, Robot *robot);
+void move(const char *command) ;
 
 #endif /* COMMAND_H_ */

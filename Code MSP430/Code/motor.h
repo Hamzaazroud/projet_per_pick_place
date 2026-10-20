@@ -13,14 +13,14 @@
 #include <msp430.h>
 #include <string.h>
 #include <math.h>
-#include <motor.h>
 #include <stdlib.h>
 #include "constants.h"
 
 // MOTOR CONTROL VARIABLES
-extern volatile unsigned int timer_compt;
-extern int abs_steps_x;
-extern int abs_steps_y;
+extern volatile unsigned long timer_compt;
+extern volatile unsigned long abs_steps_x, abs_steps_y;   // pas restants du mouvement en cours
+extern volatile long pos_x, pos_y;                         // position en pas (signee)
+extern volatile signed char dir_x, dir_y;                  // +1 avant, -1 arriere
 
 // PROTOTYPES
 void timer_on(void);
@@ -33,7 +33,9 @@ void enableMotors(int flagX, int flagY);
 void enableMotorsX(int enable);
 void enableMotorsY(int enable);
 
-int mmToStep(float mm);
-int stepToMm(float step);
+long  mmToStep(float mm);
+float stepToMm(long step);
+float getPosX_mm(void);
+float getPosY_mm(void);
 
 #endif /* MOTOR_H_ */

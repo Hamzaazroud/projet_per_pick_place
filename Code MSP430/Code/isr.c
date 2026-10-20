@@ -5,49 +5,98 @@
  *      Author: Douae CHOUBRI
  */
 #include "isr.h"
+#define F_CP 1000000UL
+#define delay_ms(x) __delay_cycles((F_CP/1000)*x)
 
 volatile unsigned int rx_index=0, command_flag=0;
 
-//-----------------------------------------------------------------------------
-//ISRs
+void send_position(void);
+
+static int long_to_str(long v, char *buf){
+    char tmp[12];
+    int i = 0, n = 0;
+    if(v < 0){ buf[n++] = '-'; v = -v; }
+    if(v == 0) tmp[i++] = '0';
+    while(v > 0){ tmp[i++] = '0' + (v % 10); v /= 10; }
+    while(i > 0) buf[n++] = tmp[--i];
+    return n;
+}
+
+
 #pragma vector = TIMER0_B0_VECTOR
 __interrupt void ISR_TB0_CCR0_MOTORX(void){
-    //GPIO_toggleOutputOnPin(LED_RED_PORT, LED_RED_PIN);
 
-    if(timer_compt<(2*abs_steps_x)){
+    if(timer_compt < (2*abs_steps_x)){
         GPIO_toggleOutputOnPin(STEP_MX1_PORT, STEP_MX1_PIN);
         GPIO_toggleOutputOnPin(STEP_MX2_PORT, STEP_MX2_PIN);
+        if(timer_compt & 1) pos_x += dir_x;
     } else {
         abs_steps_x = 0;
     }
 
-    if(timer_compt<(2*abs_steps_y)){
+    if(timer_compt < (2*abs_steps_y)){
         GPIO_toggleOutputOnPin(STEP_MY_PORT, STEP_MY_PIN);
+        if(timer_compt & 1) pos_y += dir_y;
     } else {
         abs_steps_y = 0;
     }
 
-    if(timer_compt<(2*abs_steps_x) || timer_compt<(2*abs_steps_y)){
+    if(timer_compt < (2*abs_steps_x) || timer_compt < (2*abs_steps_y)){
         timer_compt++;
     } else {
-        //Stop and reset Timer counter
-        TB0CTL |= MC__STOP; // Stop Timer
-        TB0R = 0; // Reset Timer Counter
+        TB0CTL |= MC__STOP;
+        TB0R = 0;
         timer_compt = 0;
+    }
+}
+
+// Envoi bloquant sur UART1 (n'utilise pas l'interruption TX)
+void send_position(void){
+    long x, y;
+    unsigned int n = 0, i;
+
+    x = (long)(getPosX_mm() * 100);      
+    y = (long)(getPosY_mm() * 100);
+
+    TX_Buffer[n++] = MSG_START_CHAR;
+    TX_Buffer[n++] = 'P'; TX_Buffer[n++] = 'O'; TX_Buffer[n++] = 'S'; TX_Buffer[n++] = ',';
+    n += long_to_str(x, (char*)&TX_Buffer[n]);
+    TX_Buffer[n++] = ',';
+    n += long_to_str(y, (char*)&TX_Buffer[n]);
+    TX_Buffer[n++] = MSG_END_CHAR;
+    TX_Buffer[n++] = '\r';
+    TX_Buffer[n++] = '\n';
+
+    for(i = 0; i < n; i++){
+        while(!(UCA1IFG & UCTXIFG));
+        UCA1TXBUF = TX_Buffer[i];
     }
 }
 
 #pragma vector = PORT1_VECTOR
 __interrupt void ISR_CAPTEURS_FDC(void){
-    // STOP motors
     if(P1IFG & FCX_PIN){
-        enableMotorsX(0);
-        robot.x = 0; // Home Position (X)
+        enableMotors(0,-1);
+        delay_ms(10);
+        GPIO_setOutputLowOnPin(DIR_MX1_PORT, DIR_MX1_PIN);   // en avant
+        GPIO_setOutputLowOnPin(DIR_MX2_PORT, DIR_MX2_PIN);
+        dir_x = +1;
+        pos_x = 0;  robot.x = 0;
+        abs_steps_x = 25;
+        enableMotorsX(1);
+        timer_on();
     }
     if(P1IFG & FCY_PIN){
-        enableMotorsY(0);
-        robot.y = 0; // Home Position (Y)
+        enableMotors(-1,0);
+        delay_ms(10);
+        GPIO_setOutputHighOnPin(DIR_MY_PORT, DIR_MY_PIN);    // en avant
+        dir_y = +1;
+        pos_y = 0;  robot.y = 0;
+        abs_steps_y = 50;
+        enableMotorsY(1);
+        timer_on();
     }
+
     P1IFG &= ~(FCX_PIN | FCY_PIN);
 }
 
@@ -62,6 +111,15 @@ __interrupt void ISR_EUSCI_A1(void) {
         case USCI_UART_UCRXIFG: // Receive interruption
             char RX_received_char;
             RX_received_char = UCA1RXBUF;
+
+            // ECHO (test) : renvoie le caractère reçu
+            while(!(UCA1IFG & UCTXIFG));
+            UCA1TXBUF = RX_received_char;
+
+            if(RX_received_char == 't'){
+                GPIO_toggleOutputOnPin(LED_RED_PORT, LED_RED_PIN);
+                send_position();
+            }
 
             if(rx_index==0){
                 memset(RX_Buffer, 0, RX_BUFFER_SIZE);
@@ -88,34 +146,26 @@ __interrupt void ISR_EUSCI_A1(void) {
                     if(rx_index < RX_BUFFER_SIZE-1){
                         RX_Buffer[rx_index++] = RX_received_char;
                     } else {
-                        // Handle buffer overflow error...
-                        rx_index = 0; // Reset Index
-                        command_flag = 0; // Reset command detected flag
+                        rx_index = 0;
+                        command_flag = 0;
                     }
                     break;
-            }
-
-            // UART TEST
-            if(UCA1RXBUF=='t'){
-                GPIO_toggleOutputOnPin(LED_RED_PORT, LED_RED_PIN);
             }
             break;
 
         case USCI_UART_UCTXCPTIFG:
             if(tx_index_A1<tx_length){
-                EUSCI_A_UART_transmitData(EUSCI_A1_BASE, TX_Buffer[tx_index_A1++]); //put next char into UART A1 Tx Buffer
+                EUSCI_A_UART_transmitData(EUSCI_A1_BASE, TX_Buffer[tx_index_A1++]);
             } else {
                 tx_index_A1 = 0;
             }
             break;
         default:
             break;
-
     }
-
-
 }
 #endif
+
 #ifdef USE_UART0
 #pragma vector=USCI_A0_VECTOR
 __interrupt void USCI_A0_ISR(void){
@@ -153,35 +203,26 @@ __interrupt void USCI_A0_ISR(void){
                     if(rx_index < RX_BUFFER_SIZE-1){
                         RX_Buffer[rx_index++] = RX_received_char;
                     } else {
-                        // Handle buffer overflow error...
-                        rx_index = 0; // Reset Index
-                        command_flag = 0; // Reset command detected flag
+                        rx_index = 0;
+                        command_flag = 0;
                     }
                     break;
             }
 
-            // UART TEST
-            if(UCA1RXBUF=='t'){
+            if(RX_received_char == 't'){
                 GPIO_toggleOutputOnPin(LED_RED_PORT, LED_RED_PIN);
             }
             break;
 
         case USCI_UART_UCTXCPTIFG:
             if(tx_index_A0<tx_length){
-                EUSCI_A_UART_transmitData(EUSCI_A0_BASE, TX_Buffer[tx_index_A0++]); //put next char into UART A1 Tx Buffer
+                EUSCI_A_UART_transmitData(EUSCI_A0_BASE, TX_Buffer[tx_index_A0++]);
             } else {
                 tx_index_A0 = 0;
             }
             break;
         default:
             break;
-
     }
-
-
 }
-
 #endif
-
-
-

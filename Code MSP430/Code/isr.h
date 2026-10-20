@@ -22,6 +22,8 @@
 extern volatile unsigned int rx_index;
 extern volatile unsigned int command_flag;
 
+void send_position(void);
+extern volatile unsigned char send_pos_flag;
 // PROTOTYPES
 #pragma vector = TIMER0_B0_VECTOR
 __interrupt void ISR_TB0_CCR0_MOTORX(void);

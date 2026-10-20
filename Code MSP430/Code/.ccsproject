@@ -16,4 +16,5 @@
 	<filesToOpen value="main.c"/>
 	<isTargetManual value="false"/>
 	<origin value="C:/Users/Agustin/Desktop/ENIB/S9/PER/ARCHIVE_PER_pick&amp;place_2023A/ARCHIVE_PER_ZG4_2023A/Code Msp"/>
+	<activeTargetConfiguration value="targetConfigs/MSP430FR2355.ccxml"/>
 </projectOptions>
