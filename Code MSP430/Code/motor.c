@@ -2,7 +2,7 @@
 
 // MOTOR CONTROL VARIABLES
   // pas restants du mouvement en cours
-volatile long pos_x = 0, pos_y = 0;                         // position en pas (signee)
+volatile long pos_x , pos_y ;                         // position en pas (signee)
 volatile signed char dir_x = 1, dir_y = 1;     
 volatile unsigned long    timer_compt = 0;
 volatile unsigned long  abs_steps_x = 0, abs_steps_y = 0;             // +1 avant, -1 arriere

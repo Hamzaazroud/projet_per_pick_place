@@ -35,7 +35,7 @@ void enableMotorsY(int enable);
 
 long  mmToStep(float mm);
 float stepToMm(long step);
-float getPosX_mm(void);
-float getPosY_mm(void);
+float getPosY_mm(void) ;
+float getPosX_mm(void) ;
 
 #endif /* MOTOR_H_ */

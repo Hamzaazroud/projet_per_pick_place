@@ -28,6 +28,14 @@ typedef struct {
     
 } Robot;
 
+typedef struct {
+
+ int x  ; 
+ int y ; 
+ int rayon ; 
+
+} position  ;
+
 extern Robot robot;
 extern int pos_x1 ,pos_x2 , pos_x3 , pos_y1 ,pos_y2 ; 
 
@@ -39,5 +47,6 @@ void home_position_command(const char *command, Robot *robot);
 void get_command(const char *command);
 void auto_mode_command_test(const char *command, Robot *robot);
 void move(const char *command) ;
+bool in_circle(Robot *robot, position *tab_pos, int n, int *delta_x, int *delta_y);
 
 #endif /* COMMAND_H_ */
