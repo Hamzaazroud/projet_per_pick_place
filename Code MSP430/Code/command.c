@@ -25,7 +25,7 @@ void set_position_command( Robot *robot) {
 
     steps_x = mmToStep(robot->x);
     steps_y = mmToStep(robot->y); 
-    delat_x = delat_x - pos_x ; 
+    delat_x = steps_x - pos_x ; 
     delata_y = steps_y - pos_y ; 
 
     // Set Steppers Direction
