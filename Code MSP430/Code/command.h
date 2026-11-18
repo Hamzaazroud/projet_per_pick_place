@@ -37,16 +37,16 @@ typedef struct {
 } position  ;
 
 extern Robot robot;
-extern int pos_x1 ,pos_x2 , pos_x3 , pos_y1 ,pos_y2 ; 
+
 
 // PROTOTYPES
-void auto_motor_position() ;
+void auto_motor_position(Robot *robot) ;
 void set_position_command(const char *command, Robot *robot);
 void set_speed_command(const char *command, Robot *robot);
 void home_position_command(const char *command, Robot *robot);
 void get_command(const char *command);
 void auto_mode_command_test(const char *command, Robot *robot);
 void move(const char *command) ;
-bool in_circle(Robot *robot, position *tab_pos, int n, int *delta_x, int *delta_y);
+bool in_circle(Robot *robot, const  position *tab_pos, int n, int *delta_x, int *delta_y);
 
 #endif /* COMMAND_H_ */

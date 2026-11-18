@@ -2,24 +2,34 @@
 #include "math.h" 
 
 Robot robot = {0, 0, MM_BY_TOUR * TIMER_FREQ / (2*STEP_BY_TOUR*TB0CCR0), 0};
+static const position tab_pos[] = {
+    { PIECE_POSITION_X,         PIECE_POSITION_Y,             100 },
+    { BOX_POSITION_X,           BOX_POSITION_Y,              14 },
+    { BOX_POSITION_X,           BOX_POSITION_Y - DELTA,       14 },
+    { BOX_POSITION_X,           BOX_POSITION_Y - 2 * DELTA,   14 },
+    { BOX_POSITION_X - DELTA,   BOX_POSITION_Y,               14 },
+    { BOX_POSITION_X - DELTA,   BOX_POSITION_Y - DELTA,       14 },
+    { BOX_POSITION_X - DELTA,   BOX_POSITION_Y - 2 * DELTA,   14 },
+};
 
-float x_pas = 0 ; 
-float y_pas =0 ;  
 
 
-void set_position_command(const char *command, Robot *robot) {
-    sscanf(command, "P%d-%d", &(robot->x), &(robot->y));
+void set_position_command( Robot *robot) {
+  
 
     // Calculate steps to move for X and Y axis based on the desired position
-
+    int delat_x ; 
+    int delata_y ; 
     int steps_x = 0;
     int steps_y = 0;
 
     steps_x = mmToStep(robot->x);
-    steps_y = mmToStep(robot->y);
+    steps_y = mmToStep(robot->y); 
+    delat_x = delat_x - pos_x ; 
+    delata_y = steps_y - pos_y ; 
 
     // Set Steppers Direction
-    if(steps_x > 0) {
+    if(delat_x> 0) {
         GPIO_setOutputLowOnPin(DIR_MX1_PORT, DIR_MX1_PIN);   // en avant
         GPIO_setOutputLowOnPin(DIR_MX2_PORT, DIR_MX2_PIN);   // en avant
     } else {
@@ -27,14 +37,14 @@ void set_position_command(const char *command, Robot *robot) {
         GPIO_setOutputHighOnPin(DIR_MX2_PORT, DIR_MX2_PIN);   // en arrire
     }
 
-    if(steps_y > 0) {
+    if(delata_y > 0) {
         GPIO_setOutputHighOnPin(DIR_MY_PORT, DIR_MY_PIN);   // en avant
     } else {
         GPIO_setOutputLowOnPin(DIR_MY_PORT, DIR_MY_PIN);   // en arrire
     }
 
-    abs_steps_x = steps_x >= 0 ? steps_x : -steps_x;
-    abs_steps_y = steps_y >= 0 ? steps_y : -steps_y;
+    abs_steps_x = delat_x >= 0 ? delat_x : -delat_x;
+    abs_steps_y = delata_y>= 0 ? delata_y : -delata_y;
 
     enableMotors(1, 1);
     timer_on();
@@ -93,9 +103,11 @@ void home_position_command(const char *command, Robot *robot){
 }
 
 void get_command(const char *command) {
+
     switch(command[0]){
         case 'P': // Set Position Command
-            set_position_command(command, &robot);
+             sscanf(command, "P%d-%d", &(robot.x), &(robot.y));
+            set_position_command(&robot);
             break;
         case 'V': // Set Speed Command
             set_speed_command(command, &robot);
@@ -110,7 +122,7 @@ void get_command(const char *command) {
              move(command) ;
             break;
         case 'R': 
-            auto_motor_position() ;
+            auto_motor_position(&robot) ;
             break; 
         default:
             uart_put_string("ERROR - Invalid Command");
@@ -179,47 +191,20 @@ void auto_mode_command_test(const char *command, Robot *robot){
 
 
 void auto_motor_position(Robot *robot) {
-    position tab_pos[] = {
-    { PIECE_POSITION_X,         PIECE_POSITION_Y,             10 },
-        { BOX_POSITION_X,           BOX_POSITION_Y,               10 },
-        { BOX_POSITION_X,           BOX_POSITION_Y - DELTA,       10 },
-        { BOX_POSITION_X,           BOX_POSITION_Y - 2 * DELTA,   10 },
-        { BOX_POSITION_X - DELTA,   BOX_POSITION_Y,               10 },
-        { BOX_POSITION_X - DELTA,   BOX_POSITION_Y - DELTA,       10 },
-        { BOX_POSITION_X - DELTA,   BOX_POSITION_Y - 2 * DELTA,   10 },
-    };
-    int n = sizeof(tab_pos) / sizeof(tab_pos[0]);
+
 
     int dx = 0, dy = 0;
-    if (!in_circle(robot, tab_pos, n, &dx, &dy)) {
+    if (!in_circle(robot, tab_pos,8 , &dx, &dy)) {
         return; 
     } 
-   if(dx > 0) {
-        GPIO_setOutputLowOnPin(DIR_MX1_PORT, DIR_MX1_PIN);   // en avant
-        GPIO_setOutputLowOnPin(DIR_MX2_PORT, DIR_MX2_PIN);   // en avant
-    } else {
-        GPIO_setOutputHighOnPin(DIR_MX1_PORT, DIR_MX1_PIN);   // en arrire
-        GPIO_setOutputHighOnPin(DIR_MX2_PORT, DIR_MX2_PIN);   // en arrire
-    }
 
-    if(dy > 0) {
-        GPIO_setOutputHighOnPin(DIR_MY_PORT, DIR_MY_PIN);   // en avant
-    } else {
-        GPIO_setOutputLowOnPin(DIR_MY_PORT, DIR_MY_PIN);   // en arrire
-    }
-
-    abs_steps_x = dx >= 0 ? dx : -dx;
-    abs_steps_y = dy >= 0 ? dy : -dy;
-
-    enableMotors(1, 1);
-    timer_on();
-
-
-    uart_put_string("<P1>"); // ACK message from MSP430 board to PLC
+robot->x = dx ; 
+robot-> y = dy ;
+set_position_command( robot);
 }
 
 
-bool in_circle(Robot *robot, position *tab_pos, int n, int *delta_x, int *delta_y) {
+bool in_circle(Robot *robot, const position *tab_pos, int n, int *delta_x, int *delta_y) {
     for (int i = 0; i < n; i++) {
         int dx = tab_pos[i].x - robot->x;
         int dy = tab_pos[i].y - robot->y;
