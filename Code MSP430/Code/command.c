@@ -25,11 +25,11 @@ void set_position_command( Robot *robot) {
 
     steps_x = mmToStep(robot->x);
     steps_y = mmToStep(robot->y); 
-    delat_x = steps_x - pos_x ; 
-    delata_y = steps_y - pos_y ; 
+    delat_x =   pos_x- steps_x ; 
+    delata_y =  pos_y-steps_y ; 
 
     // Set Steppers Direction
-    if(delat_x> 0) {
+    if(delat_x< 0) {
         GPIO_setOutputLowOnPin(DIR_MX1_PORT, DIR_MX1_PIN);   // en avant
         GPIO_setOutputLowOnPin(DIR_MX2_PORT, DIR_MX2_PIN);   // en avant
     } else {
@@ -37,7 +37,7 @@ void set_position_command( Robot *robot) {
         GPIO_setOutputHighOnPin(DIR_MX2_PORT, DIR_MX2_PIN);   // en arrire
     }
 
-    if(delata_y > 0) {
+    if(delata_y < 0) {
         GPIO_setOutputHighOnPin(DIR_MY_PORT, DIR_MY_PIN);   // en avant
     } else {
         GPIO_setOutputLowOnPin(DIR_MY_PORT, DIR_MY_PIN);   // en arrire
