@@ -1,8 +1,8 @@
 /*
  * isr.c
  *
- *  Created on: 3 déc. 2025
- *      Author: Douae CHOUBRI
+ *  Created on: 25 nov 2026
+ *      Author: Hamza Azroud
  */
 #include "isr.h"
 #define F_CP 1000000UL
@@ -21,7 +21,6 @@ static int long_to_str(long v, char *buf){
     while(i > 0) buf[n++] = tmp[--i];
     return n;
 }
-
 
 #pragma vector = TIMER0_B0_VECTOR
 __interrupt void ISR_TB0_CCR0_MOTORX(void){
@@ -47,6 +46,13 @@ __interrupt void ISR_TB0_CCR0_MOTORX(void){
         TB0CTL |= MC__STOP;
         TB0R = 0;
         timer_compt = 0;
+
+        if(x_pending){                   
+            x_pending = 0;
+            abs_steps_x = x_pending_steps;
+            enableMotors(1, 0);        
+            timer_on();
+        }
     }
 }
 
@@ -55,7 +61,7 @@ void send_position(void){
     long x, y;
     unsigned int n = 0, i;
 
-    x = (long)(getPosX_mm() * 100);      
+    x = (long)(getPosX_mm() * 100);
     y = (long)(getPosY_mm() * 100);
 
     TX_Buffer[n++] = MSG_START_CHAR;
@@ -75,27 +81,28 @@ void send_position(void){
 
 #pragma vector = PORT1_VECTOR
 __interrupt void ISR_CAPTEURS_FDC(void){
-    if(P1IFG & FCX_PIN){
+    
+    if((P1IFG & FCX_PIN)){
         enableMotors(0,-1);
-        delay_ms(10);
-        GPIO_setOutputLowOnPin(DIR_MX1_PORT, DIR_MX1_PIN);   // en avant
+        GPIO_setOutputLowOnPin(DIR_MX1_PORT, DIR_MX1_PIN);   
         GPIO_setOutputLowOnPin(DIR_MX2_PORT, DIR_MX2_PIN);
         dir_x = +1;
+        x_pending = 0;
         pos_x = 0;  robot.x = 0;
         abs_steps_x = 25;
         enableMotorsX(1);
         timer_on();
     }
-    if(P1IFG & FCY_PIN){
-        enableMotors(-1,0);
-        delay_ms(10);
-        GPIO_setOutputHighOnPin(DIR_MY_PORT, DIR_MY_PIN);    // en avant
-        dir_y = +1;
-        pos_y = 0;  robot.y = 0;
-        abs_steps_y = 50;
-        enableMotorsY(1);
-        timer_on();
-    }
+   if((P1IFG & FCY_PIN)){          
+    enableMotors(-1,0);
+    GPIO_setOutputHighOnPin(DIR_MY_PORT, DIR_MY_PIN);    
+    dir_y = +1;
+    x_pending = 0;
+    pos_y = 0;  robot.y = 0;
+    abs_steps_y = 50;
+    enableMotorsY(1);
+    timer_on();
+}
 
     P1IFG &= ~(FCX_PIN | FCY_PIN);
 }

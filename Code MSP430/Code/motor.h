@@ -21,6 +21,8 @@ extern volatile unsigned long timer_compt;
 extern volatile unsigned long abs_steps_x, abs_steps_y;   // pas restants du mouvement en cours
 extern volatile long pos_x, pos_y;                         // position en pas (signee)
 extern volatile signed char dir_x, dir_y;                  // +1 avant, -1 arriere
+extern volatile unsigned char x_pending;
+extern volatile unsigned long x_pending_steps;
 
 // PROTOTYPES
 void timer_on(void);

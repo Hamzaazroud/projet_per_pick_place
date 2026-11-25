@@ -1,11 +1,12 @@
 #include "motor.h"
 
 // MOTOR CONTROL VARIABLES
-  // pas restants du mouvement en cours
-volatile long pos_x , pos_y ;                         // position en pas (signee)
-volatile signed char dir_x = 1, dir_y = 1;     
-volatile unsigned long    timer_compt = 0;
-volatile unsigned long  abs_steps_x = 0, abs_steps_y = 0;             // +1 avant, -1 arriere
+volatile long pos_x = 0, pos_y = 0;                  // position en pas (signée)
+volatile signed char dir_x = 1, dir_y = 1;           // +1 avant, -1 arrière
+volatile unsigned long timer_compt = 0;
+volatile unsigned long abs_steps_x = 0, abs_steps_y = 0;   // pas restants
+volatile unsigned char x_pending = 0;                // X en attente (après Y)
+volatile unsigned long x_pending_steps = 0;
 
 void timer_on(){
     timer_compt = 0;
@@ -45,7 +46,6 @@ void motor_gpio_init(){
 }
 
 void HomePositionXY(int flagX, int flagY) {
-    // Met les moteurs x et y en position initiale (vers les fins de course)
     if(flagX){
         GPIO_setOutputHighOnPin(DIR_MX1_PORT, DIR_MX1_PIN);   // en arriere
         GPIO_setOutputHighOnPin(DIR_MX2_PORT, DIR_MX2_PIN);   // en arriere
