@@ -170,6 +170,7 @@ case 3  :
    abs_steps_y = 2000 ; 
  timer_on() ;
  enableMotors(0,1 );
+    break; 
   default:
             uart_put_string("ERROR - Invalid Command");
             break;
